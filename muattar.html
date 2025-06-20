@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bitta Sahifa CRUD</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 60%;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .buttons button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      background-color: #ff6a00;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .buttons button:hover {
+      background-color: #170844;
+    }
+
+    input[type="text"] {
+      padding: 5px;
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ma'lumotlar</h1>
+
+  <div id="form-section">
+    <div class="form-group">
+      <label for="ism">Ism:</label>
+      <input type="text" id="ismInput" />
+    </div>
+    <div class="form-group">
+      <label for="familiya">Familiya:</label>
+      <input type="text" id="familiyaInput" />
+    </div>
+    <div class="form-group">
+      <label for="telefon">Telefon:</label>
+      <input type="text" id="telefonInput" maxlength="14" oninput="faqatRaqam(this)" />
+    </div>
+    <div class="buttons">
+      <button onclick="qoshish()">Qo‘shish</button>
+      <button onclick="yangilash()">Yangilash</button>
+    </div>
+  </div>
+
+  <table id="malumotlar">
+    <thead>
+      <tr>
+        <th>Ism</th>
+        <th>Familiya</th>
+        <th>Telefon</th>
+        <th>Amallar</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <!-- Ma'lumotlar shu yerga tushadi -->
+    </tbody>
+  </table>
+
+  <script>
+    let tahrirIndex = null;
+
+    function faqatRaqam(input) {
+      // faqat raqam va bitta boshidagi + belgisini qoldirish
+      let val = input.value.replace(/[^\d+]/g, ''); // raqam va + ni qoldir
+      if (val.startsWith('+')) {
+        val = '+' + val.replace(/\+/g, '').slice(0, 13); // + bilan bo‘lsa 13 ta raqam
+      } else {
+        val = val.replace(/\+/g, '').slice(0, 14); // + bo‘lmasa 14 raqam
+      }
+      input.value = val;
+    }
+
+    function qoshish() {
+      const ism = document.getElementById('ismInput').value.trim();
+      const familiya = document.getElementById('familiyaInput').value.trim();
+      const telefon = document.getElementById('telefonInput').value.trim();
+
+      if (!ism || !familiya || !telefon) {
+        alert("Iltimos, barcha maydonlarni to'ldiring.");
+        return;
+      }
+
+      let foydalanuvchilar = JSON.parse(localStorage.getItem('foydalanuvchilar')) || [];
+
+      if (foydalanuvchilar.length >= 1) {
+        alert("Faqat 1 marta ro‘yxatdan o‘tish mumkin.");
+        return;
+      }
+
+      const yangiFoydalanuvchi = { ism, familiya, telefon };
+      foydalanuvchilar.push(yangiFoydalanuvchi);
+      localStorage.setItem('foydalanuvchilar', JSON.stringify(foydalanuvchilar));
+
+      alert("Ma'lumot qo‘shildi!");
+      tozalash();
+      korish();
+    }
+
+    function korish() {
+      const foydalanuvchilar = JSON.parse(localStorage.getItem('foydalanuvchilar')) || [];
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = "";
+
+      if (foydalanuvchilar.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Ma'lumot topilmadi</td></tr>`;
+        return;
+      }
+
+      foydalanuvchilar.forEach((user, index) => {
+        const row = `<tr>
+          <td>${user.ism}</td>
+          <td>${user.familiya}</td>
+          <td>${user.telefon}</td>
+          <td>
+            <button onclick="tahrirlash(${index})">✏️</button>
+            <button onclick="ochirish(${index})">🗑️</button>
+          </td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function tahrirlash(index) {
+      const foydalanuvchilar = JSON.parse(localStorage.getItem('foydalanuvchilar')) || [];
+      const user = foydalanuvchilar[index];
+
+      if (!user) {
+        alert("Foydalanuvchi topilmadi.");
+        return;
+      }
+
+      document.getElementById('ismInput').value = user.ism;
+      document.getElementById('familiyaInput').value = user.familiya;
+      document.getElementById('telefonInput').value = user.telefon;
+
+      tahrirIndex = index;
+    }
+
+    function yangilash() {
+      if (tahrirIndex === null) {
+        alert("Tahrirlanadigan foydalanuvchini tanlang.");
+        return;
+      }
+
+      const ism = document.getElementById('ismInput').value.trim();
+      const familiya = document.getElementById('familiyaInput').value.trim();
+      const telefon = document.getElementById('telefonInput').value.trim();
+
+      if (!ism || !familiya || !telefon) {
+        alert("Iltimos, barcha maydonlarni to'ldiring.");
+        return;
+      }
+
+      const foydalanuvchilar = JSON.parse(localStorage.getItem('foydalanuvchilar')) || [];
+      foydalanuvchilar[tahrirIndex] = { ism, familiya, telefon };
+      localStorage.setItem('foydalanuvchilar', JSON.stringify(foydalanuvchilar));
+
+      alert("Ma'lumot yangilandi!");
+      tozalash();
+      korish();
+      tahrirIndex = null;
+    }
+
+    function ochirish(index) {
+      const foydalanuvchilar = JSON.parse(localStorage.getItem('foydalanuvchilar')) || [];
+
+      if (confirm("Ma'lumotni o‘chirishga ishonchingiz komilmi?")) {
+        foydalanuvchilar.splice(index, 1);
+        localStorage.setItem('foydalanuvchilar', JSON.stringify(foydalanuvchilar));
+        alert("Ma'lumot o‘chirildi.");
+        tozalash();
+        korish();
+      }
+    }
+
+    function tozalash() {
+      document.getElementById('ismInput').value = '';
+      document.getElementById('familiyaInput').value = '';
+      document.getElementById('telefonInput').value = '';
+    }
+
+    window.onload = korish;
+  </script>
+</body>
+</html>
